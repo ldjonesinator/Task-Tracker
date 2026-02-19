@@ -1,6 +1,7 @@
 import time
 from datetime import datetime
 from PyQt5.QtWidgets import QPushButton
+from PyQt5.QtCore import pyqtSignal
 from random import randint, choice
 
 STORE_LIMIT = 1
@@ -64,7 +65,7 @@ class Timer():
 		if self.isEnd:
 			return -1
 		self.check_pause_time()
-		return time.perf_counter() - self.st - self.pt
+		return round(time.perf_counter() - self.st - self.pt, 2)
 
 	def restart_timer(self):
 		self.end_timer()
@@ -120,29 +121,29 @@ class TimerButton(QPushButton):
 
 		self.type = type
 		self.timer = timer
-		self.setText(self.type)
+		self.title = self.type
+		self.setText(self.title)
 
 	def mousePressEvent(self, e):
 		if self.type == BUTTON_TYPES["PLAY"]:
 			if self.timer.isEnd:
 				self.timer.start_timer(get_system_time())
-				self.setText("Pause")
+				self.title = "Pause"
 			elif self.timer.isPaused:
 				self.timer.resume_timer()
-				self.setText("Pause")
+				self.title = "Pause"
 			else:
 				self.timer.pause_timer()
-				self.setText("Play")
+				self.title = "Play"
 		elif self.type == BUTTON_TYPES["SAVE"]:
 			if self.timer.total_time >= STORE_LIMIT:
 				self.timer.end_timer()
-
 				self.timer.store_time(TIMER_FILE, get_system_date())
+
 		elif self.type == BUTTON_TYPES["RESET"]:
 			self.timer.restart_timer()
 
-
-
+		self.setText(self.title)
 		e.accept()
 
 
@@ -161,6 +162,15 @@ def get_system_time():
 def get_system_date():
 	now = datetime.now().date()
 	return now.strftime("%d/%m/%Y")
+
+def format_time(seconds):
+	left_over = round(seconds)
+	hours = left_over // 60 // 60
+	left_over -= hours * 60 * 60
+	minutes = left_over // 60
+	left_over -= minutes * 60
+	secs = left_over
+	return f"{hours:02d}:{minutes:02d}:{secs:02d}"
 
 
 def run_commands(command):
