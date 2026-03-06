@@ -137,9 +137,6 @@ class MainWindow(QMainWindow):
 			self.play_btn.setText("Start")
 
 	def manual_time_widgets(self):
-		self.statement = QLabel("Enter a new Time")
-		self.statement.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
-		self.statement.setHidden(True)
 
 		self.task_box = QComboBox()
 		self.task_box.setMinimumWidth(200)
@@ -153,6 +150,8 @@ class MainWindow(QMainWindow):
 		self.time_box.setHidden(True)
 
 		self.duration_box = QSpinBox()
+		self.duration_box.setRange(0, 5940)
+		self.duration_box.setSingleStep(15)
 		self.duration_box.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
 		self.duration_box.setHidden(True)
 
@@ -168,7 +167,6 @@ class MainWindow(QMainWindow):
 
 		self.selection_layout = QHBoxLayout()
 
-		self.add_time_layout.addWidget(self.statement, alignment=Qt.AlignVCenter)
 		self.selection_layout.addWidget(self.task_box, alignment=Qt.AlignVCenter)
 		self.selection_layout.addWidget(self.time_box, alignment=Qt.AlignVCenter)
 		self.selection_layout.addWidget(self.duration_box, alignment=Qt.AlignVCenter)
@@ -177,7 +175,6 @@ class MainWindow(QMainWindow):
 		self.add_time_layout.addWidget(self.confirm_btn, alignment=Qt.AlignVCenter)
 
 	def toggle_manual_time_widg(self):
-		self.statement.setHidden(self.m_widg_hide)
 		self.task_box.setHidden(self.m_widg_hide)
 		self.time_box.setHidden(self.m_widg_hide)
 		self.duration_box.setHidden(self.m_widg_hide)
@@ -193,7 +190,11 @@ class MainWindow(QMainWindow):
 
 	def store_manual(self):
 		title = self.task_box.currentText()
-		duration = self.duration_box.value() * 60 # in minutes
+		duration = self.duration_box.value()
+		d_hours = duration // 60
+		d_mins = duration - d_hours * 60
+
+
 		note = self.text_box.text()
 
 		dt = self.time_box.dateTime()
@@ -203,13 +204,16 @@ class MainWindow(QMainWindow):
 		day = dt.date().day()
 		date = datetime(year, month, day)
 
-		hours = dt.time().hour()
-		mins = dt.time().minute()
-		start = dtime(hours, mins)
-		end = dtime((hours+duration) % 24, mins)
+		s_hours = dt.time().hour()
+		s_mins = dt.time().minute()
+		start = dtime(s_hours, s_mins)
+
+		e_hours = s_hours + d_hours + (s_mins + d_mins) // 60
+		e_mins = s_mins + d_mins - 60 * ((s_mins + d_mins) // 60)
+		end = dtime(e_hours % 24, e_mins)
 
 		print(date.strftime("%d/%m/%Y"), " : ", end.strftime("%H:%M"), duration)
-		time_store_in_file(TIMER_FILE, title, date.strftime("%d/%m/%Y"), duration, start.strftime("%H:%M"), end.strftime("%H:%M"), note)
+		time_store_in_file(TIMER_FILE, title, date.strftime("%d/%m/%Y"), duration * 60, start.strftime("%H:%M"), end.strftime("%H:%M"), note)
 		self.toggle_manual_time_widg()
 
 

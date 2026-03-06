@@ -124,9 +124,9 @@ def time_store_in_file(filename, title, date, tt, start, end, note):
 
 
 def format_text(title, date, tt, st, et, note):
-	t_time = tt//60
+	t_time = round(tt / 60) # in seconds
 	if title == "FALSE":
-		return f"{date},{t_time},{st} - {et},{note},,\n"
+		return f"{date},{t_time},{st}-{et},{note},,\n"
 	return f"{title},{date},{t_time},{st}-{et},{note},,\n"
 
 
@@ -145,7 +145,7 @@ def format_time(seconds):
 	minutes = left_over // 60
 	left_over -= minutes * 60
 	secs = left_over
-	return f"{hours:02d}:{minutes:02d}:{secs:02d}"
+	return f"{hours:02d}:{minutes:02d}"
 
 def graph_time():
 	pass
