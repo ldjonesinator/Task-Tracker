@@ -1,5 +1,8 @@
 import time
 from datetime import datetime
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
+from matplotlib.figure import Figure
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtCore import pyqtSignal
 from random import randint, choice
@@ -38,7 +41,7 @@ class Timer():
 				self.et = time.perf_counter()
 
 			self.total_time = self.get_elapsed_time()
-			self.end = (time.perf_counter() - self.st) + self.start
+			self.end = get_system_time()
 			self.isPaused = False
 			self.pt = 0
 			self.pause_log = 0
@@ -76,37 +79,7 @@ class Timer():
 
 	def store_time(self, filename, date):
 		if self.isEnd and self.total_time >= STORE_LIMIT:
-			try:
-				with open(filename, 'x') as file:
-					write_line = format_text(self.title, date, self.total_time, self.start,
-											 self.end, self.note)
-					print(f"Creating file: {filename}")
-					file.write(write_line)
-			except FileExistsError:
-
-				with open(filename, 'r') as file:
-					lines = file.readlines()
-
-				# getting the line to write to if it exists
-				found_i = -1;
-				for i in range(len(lines)):
-					if self.title in lines[i]:
-						write_line = lines[i][:-1] # remove \n
-						found_i = i;
-
-				# adding new data to specific line in file
-				if found_i != -1:
-					write_line += format_text("FALSE", date, self.total_time, self.start,
-											 self.end, self.note)
-					lines[found_i] = write_line
-
-				else:
-					write_line = format_text(self.title, date, self.total_time, self.start,
-											 self.end, self.note)
-					lines.append(write_line)
-
-				with open(filename, 'w') as file:
-					file.writelines(lines)
+			time_store_in_file(filename, self.title, date, self.total_time, self.start, self.end, self.note)
 
 			self.restart_timer()
 
@@ -115,44 +88,46 @@ class Timer():
 			print(f"Time: {self.total_time:.0f}s")
 
 
-class TimerButton(QPushButton):
-	def __init__(self, timer, type):
-		super().__init__()
+def time_store_in_file(filename, title, date, tt, start, end, note):
+	try:
+		with open(filename, 'x') as file:
+			write_line = format_text(title, date, tt, start,
+										end, note)
+			print(f"Creating file: {filename}")
+			file.write(write_line)
+	except FileExistsError:
 
-		self.type = type
-		self.timer = timer
-		self.title = self.type
-		self.setText(self.title)
+		with open(filename, 'r') as file:
+			lines = file.readlines()
 
-	def mousePressEvent(self, e):
-		if self.type == BUTTON_TYPES["PLAY"]:
-			if self.timer.isEnd:
-				self.timer.start_timer(get_system_time())
-				self.title = "Pause"
-			elif self.timer.isPaused:
-				self.timer.resume_timer()
-				self.title = "Pause"
-			else:
-				self.timer.pause_timer()
-				self.title = "Play"
-		elif self.type == BUTTON_TYPES["SAVE"]:
-			if self.timer.total_time >= STORE_LIMIT:
-				self.timer.end_timer()
-				self.timer.store_time(TIMER_FILE, get_system_date())
+		# getting the line to write to if it exists
+		found_i = -1;
+		for i in range(len(lines)):
+			if title in lines[i]:
+				write_line = lines[i][:-1] # remove \n
+				found_i = i;
 
-		elif self.type == BUTTON_TYPES["RESET"]:
-			self.timer.restart_timer()
+		# adding new data to specific line in file
+		if found_i != -1:
+			write_line += format_text("FALSE", date, tt, start,
+										end, note)
+			lines[found_i] = write_line
 
-		self.setText(self.title)
-		e.accept()
+		else:
+			write_line = format_text(title, date, tt, start,
+										end, note)
+			lines.append(write_line)
+
+		with open(filename, 'w') as file:
+			file.writelines(lines)
+
 
 
 def format_text(title, date, tt, st, et, note):
-	t_time = round(tt/60)
-	e_time = round(et/60)
+	t_time = tt//60
 	if title == "FALSE":
-		return f"{date},{t_time},{st} - {e_time},{note},,\n"
-	return f"{title},{date},{t_time},{st}-{e_time},{note},,\n"
+		return f"{date},{t_time},{st} - {et},{note},,\n"
+	return f"{title},{date},{t_time},{st}-{et},{note},,\n"
 
 
 def get_system_time():
@@ -171,6 +146,9 @@ def format_time(seconds):
 	left_over -= minutes * 60
 	secs = left_over
 	return f"{hours:02d}:{minutes:02d}:{secs:02d}"
+
+def graph_time():
+	pass
 
 
 def run_commands(command):
