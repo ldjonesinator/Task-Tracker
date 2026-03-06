@@ -5,11 +5,14 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
 							 QSizePolicy, QPushButton, QLineEdit, QComboBox, QDateTimeEdit, QSpinBox)
 from PyQt5.QtGui import QFont, QPalette, QColor
 
-from layout_colour import Color
-
-from timer import Timer, BUTTON_TYPES, format_time, get_system_time, get_system_date, time_store_in_file, STORE_LIMIT, TIMER_FILE
 from datetime import time as dtime
 from datetime import datetime
+
+
+from layout_colour import Color
+
+from timer import Timer, BUTTON_TYPES, STORE_LIMIT, TIMER_FILE
+from timer_data import time_store_in_file, format_time, get_system_time, get_system_date
 
 
 MIN_SIZE = 0.5
