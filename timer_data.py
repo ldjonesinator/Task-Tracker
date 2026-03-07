@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
 from PyQt5.QtWidgets import QPushButton
@@ -63,9 +64,65 @@ def time_store_in_file(filename, title, date, tt, start, end, note):
 		with open(filename, 'w') as file:
 			file.writelines(lines)
 
+# gets two lists of data from the times file
+# xi and yi are indexes that start at 0 being the date
+def get_axis_data(filename, delim, task, xi, yi):
+	xs = []
+	ys = []
 
-def graph_time():
-	pass
+	with open(filename, 'r') as file:
+		lines = file.readlines()
+
+	success = False
+	for line in lines:
+		if task in line:
+			data_line = line
+			success = True
+
+	if not success:
+		return -1
+
+	value = ""
+	i = -1
+	for char in list(data_line):
+
+		if char == delim:
+			if (i % 5) == xi:
+				xs.append(value)
+			elif (i % 5) == yi:
+				ys.append(value)
+
+			i += 1
+			value = ""
+		else:
+			value += char
+
+
+	return xs, ys
+
+def graph_time(filename, task):
+	xs, ys = get_axis_data(filename, ',', task, 0, 1)
+
+	zip_data = zip(xs, ys)
+	sorted_data = sorted(zip_data, key=lambda x: datetime.strptime(x[0], '%d/%m/%Y'))
+
+	x_axis = []
+	y_axis = []
+	for i, j in sorted_data:
+		x_axis.append(i)
+		y_axis.append(j)
+
+	plt.plot(x_axis, y_axis)
+	plt.title(task)
+	plt.xlabel("Date")
+	plt.xticks(rotation=45)
+	plt.ylabel("Duration")
+
+	plt.show()
+
 
 def update_statistics():
 	pass
+
+if __name__ == "__main__":
+	graph_time("times.csv", "Work")
