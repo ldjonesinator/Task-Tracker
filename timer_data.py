@@ -8,6 +8,8 @@ from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtCore import pyqtSignal
 
 
+DATA_TYPE = {"DATE": 0, "DURATION": 1, "TIMES": 2, "NOTE": 3}
+
 def get_system_time():
 	now = datetime.now().time()
 	return now.strftime("%H:%M")
@@ -64,11 +66,9 @@ def time_store_in_file(filename, title, date, tt, start, end, note):
 		with open(filename, 'w') as file:
 			file.writelines(lines)
 
-# gets two lists of data from the times file
-# xi and yi are indexes that start at 0 being the date
-def get_axis_data(filename, delim, task, xi, yi):
+# gets lists of data from the times file
+def get_time_data(filename, delim, task, xi):
 	xs = []
-	ys = []
 
 	with open(filename, 'r') as file:
 		lines = file.readlines()
@@ -89,19 +89,17 @@ def get_axis_data(filename, delim, task, xi, yi):
 		if char == delim:
 			if (i % 5) == xi:
 				xs.append(value)
-			elif (i % 5) == yi:
-				ys.append(value)
-
 			i += 1
 			value = ""
 		else:
 			value += char
 
 
-	return xs, ys
+	return xs
 
 def graph_time(filename, task):
-	xs, ys = get_axis_data(filename, ',', task, 0, 1)
+	xs = get_time_data(filename, ',', task, DATA_TYPE["DATE"])
+	ys = get_time_data(filename, ',', task, DATA_TYPE["DURATION"])
 
 	zip_data = zip(xs, ys)
 	sorted_data = sorted(zip_data, key=lambda x: datetime.strptime(x[0], '%d/%m/%Y'))
@@ -121,8 +119,37 @@ def graph_time(filename, task):
 	plt.show()
 
 
-def update_statistics():
-	pass
+def find_statistic(filename, task, t_type):
+	data = get_time_data(filename, ',', task, DATA_TYPE[t_type])
+	if DATA_TYPE[t_type] == DATA_TYPE["DURATION"]:
+		total_spent = 0
+		for time in data:
+			total_spent += int(time)
+
+		return total_spent
+
+	elif DATA_TYPE[t_type] == DATA_TYPE["NOTE"]:
+		note_count = {}
+		for note in data:
+			note_edit = note.strip().lower()
+			if note_edit in note_count:
+				note_count[note_edit] += 1
+			else:
+				note_count[note_edit] = 1
+
+		return note_count
+
+	return -1
+
+def statistic_pie_chart(filename, task, t_type, title):
+	stat_dict = find_statistic(filename, task, t_type)
+	plt.pie(stat_dict.values(), labels = stat_dict.keys(), autopct='%1.0f%%')
+	plt.title(title)
+	plt.show()
+
 
 if __name__ == "__main__":
+	print(find_statistic("times.csv", "Uni", "DURATION"))
+	print(find_statistic("times.csv", "Uni", "NOTE"))
+	statistic_pie_chart("times.csv", "Uni", "NOTE", "Activity type for Uni")
 	graph_time("times.csv", "Work")
