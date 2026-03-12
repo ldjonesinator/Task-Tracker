@@ -41,7 +41,8 @@ class MainWindow(QMainWindow):
 		self.base_layout.setSpacing(SPACING)
 
 		self.setup_left_layout()
-		self.setup_timer("fail", "failed to add note")
+		self.timer_widget = TimerWidget(self.tasks, "fail", "failed to add note")
+		self.base_layout.addWidget(self.timer_widget, alignment=Qt.AlignVCenter)
 		self.setup_right_layout()
 
 
@@ -49,15 +50,11 @@ class MainWindow(QMainWindow):
 		widget.setLayout(self.base_layout)
 		self.setCentralWidget(widget)
 
-		self.timer_refresh = QTimer(self)
-		self.timer_refresh.timeout.connect(self.update_time)
-		self.timer_refresh.start(1000)
-
 		self.notifictn_count = 1
 		self.notification_check = QTimer(self)
-		self.timer_refresh.timeout.connect(lambda: self.check_send_notification("Timer Running", "Don't forget to stop the timer!",
-																				self.timer.get_elapsed_time()))
-		self.timer_refresh.start(10000)
+		self.notification_check.timeout.connect(lambda: self.check_send_notification("Timer Running", "Don't forget to stop the timer!",
+																				self.timer_widget.get_time()))
+		self.notification_check.start(10000)
 
 
 	def setup_left_layout(self):
@@ -80,108 +77,12 @@ class MainWindow(QMainWindow):
 		self.base_layout.addLayout( self.left_layout )
 
 
-
-	def setup_timer(self, title, note):
-		self.timer = Timer(title, note)
-		self.timer_layout = QVBoxLayout()
-
-		self.timer_label = QLabel("00:00")
-		self.timer_label.setFont(QFont("Arial", TIMER_FONT_SIZE))
-		self.timer_label.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
-		self.timer_label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-		self.timer_layout.addWidget(self.timer_label, alignment=Qt.AlignVCenter)
-
-
-		self.btn_text = []
-
-		self.play_btn = create_button(BUTTON_TYPES["PLAY"],
-			lambda: self.timer_btn_events(BUTTON_TYPES["PLAY"])
-		)
-
-		self.save_btn = create_button(BUTTON_TYPES["SAVE"],
-			lambda: self.timer_btn_events(BUTTON_TYPES["SAVE"]), False
-		)
-
-		self.reset_btn = create_button(BUTTON_TYPES["RESET"],
-			lambda: self.timer_btn_events(BUTTON_TYPES["RESET"])
-		)
-
-
-		self.t_task_box = QComboBox()
-		self.t_task_box.setMinimumWidth(100)
-		self.t_task_box.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-		self.t_task_box.addItems(self.tasks)
-
-		self.t_text_box = QLineEdit()
-		self.t_text_box.setMaxLength(DESCRIPTION_LENGTH)
-		self.t_text_box.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
-		self.t_text_box.setPlaceholderText("Short Description")
-
-
-		self.t_btn_layout = QHBoxLayout()
-		self.timer_layout.addWidget(self.play_btn, Qt.AlignHCenter | Qt.AlignVCenter)
-		self.timer_layout.addLayout(
-			h_layout(self.save_btn, self.reset_btn)
-		)
-
-		self.timer_layout.addLayout(
-			h_layout(self.t_text_box, self.t_task_box)
-		)
-
-		self.timer_widg = Color(LAYOUT_COLOUR)
-		self.timer_widg.setLayout( self.timer_layout )
-		self.base_layout.addWidget(self.timer_widg, alignment=Qt.AlignVCenter)
-
-
-
 	def setup_right_layout(self):
 		self.right_layout.addWidget(Color(LAYOUT_COLOUR))
 		self.right_layout.addWidget(Color(LAYOUT_COLOUR))
 
 		self.base_layout.addLayout( self.right_layout )
 
-
-	def update_time(self):
-		if not self.timer.isEnd:
-			self.timer_label.setText(format_time(self.timer.get_elapsed_time()))
-
-	def timer_btn_events(self, b_type):
-		if b_type == BUTTON_TYPES["PLAY"]:
-			if self.timer.isEnd: # clicked start
-				self.timer.start_timer(get_system_time())
-				self.play_btn.setText("Pause")
-				self.save_btn.setEnabled(True)
-				# self.save_btn.setStyleSheet("background-color: lightblue;")
-				self.play_btn.setStyleSheet("background-color: red;")
-
-			elif self.timer.isPaused:
-				self.timer.resume_timer()
-				self.play_btn.setText("Pause")
-				self.play_btn.setStyleSheet("background-color: red;")
-			else:
-				self.timer.pause_timer()
-				self.play_btn.setText("Play")
-				self.play_btn.setStyleSheet("background-color: lightblue;")
-
-		elif b_type == BUTTON_TYPES["SAVE"]:
-			if self.timer.end_timer() >= STORE_LIMIT:
-				self.timer.title = self.t_task_box.currentText()
-				self.timer.note = self.t_text_box.text()
-				self.timer.store_time(TIMER_FILE, get_system_date())
-				self.timer_label.setText("00:00")
-				self.play_btn.setText("Start")
-
-				self.play_btn.setStyleSheet("")
-				self.save_btn.setEnabled(False)
-				self.notifictn_count = 1
-
-		elif b_type == BUTTON_TYPES["RESET"]:
-			self.timer.restart_timer()
-			self.timer_label.setText("00:00")
-			self.play_btn.setText("Start")
-
-			self.play_btn.setStyleSheet("")
-			self.notifictn_count = 1
 
 	def manual_time_widgets(self):
 
@@ -273,6 +174,113 @@ class MainWindow(QMainWindow):
 				2000 # 2 seconds timeout
 			)
 			self.notifictn_count += 1
+
+
+class TimerWidget(QWidget):
+
+	def __init__(self, tasks, title, note):
+		super().__init__()
+
+		self.timer = Timer(title, note)
+		self.layout = QVBoxLayout()
+
+		self.timer_refresh = QTimer(self)
+		self.timer_refresh.timeout.connect(self.update_time)
+		self.timer_refresh.start(10 * 1000) # every 10 seconds
+
+		self.label = QLabel("00:00")
+		self.label.setFont(QFont("Arial", TIMER_FONT_SIZE))
+		self.label.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+		self.label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+		self.layout.addWidget(self.label, alignment=Qt.AlignVCenter)
+
+
+
+
+		self.btn_text = []
+
+		self.play_btn = create_button(BUTTON_TYPES["PLAY"],
+			lambda: self.timer_btn_events(BUTTON_TYPES["PLAY"])
+		)
+
+		self.save_btn = create_button(BUTTON_TYPES["SAVE"],
+			lambda: self.timer_btn_events(BUTTON_TYPES["SAVE"]), False
+		)
+
+		self.reset_btn = create_button(BUTTON_TYPES["RESET"],
+			lambda: self.timer_btn_events(BUTTON_TYPES["RESET"])
+		)
+
+
+		self.task_box = QComboBox()
+		self.task_box.setMinimumWidth(100)
+		self.task_box.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		self.task_box.addItems(tasks)
+
+		self.text_box = QLineEdit()
+		self.text_box.setMaxLength(DESCRIPTION_LENGTH)
+		self.text_box.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+		self.text_box.setPlaceholderText("Short Description")
+
+
+		self.layout.addWidget(self.play_btn, Qt.AlignHCenter | Qt.AlignVCenter)
+		self.layout.addLayout(
+			h_layout(self.save_btn, self.reset_btn)
+		)
+
+		self.layout.addLayout(
+			h_layout(self.text_box, self.task_box)
+		)
+
+		self.setLayout( self.layout )
+
+
+	def timer_btn_events(self, b_type):
+		if b_type == BUTTON_TYPES["PLAY"]:
+			if self.timer.isEnd: # clicked start
+				self.timer.start_timer(get_system_time())
+				self.play_btn.setText("Pause")
+				self.save_btn.setEnabled(True)
+				# self.save_btn.setStyleSheet("background-color: lightblue;")
+				self.play_btn.setStyleSheet("background-color: red;")
+
+			elif self.timer.isPaused:
+				self.timer.resume_timer()
+				self.play_btn.setText("Pause")
+				self.play_btn.setStyleSheet("background-color: red;")
+			else:
+				self.timer.pause_timer()
+				self.play_btn.setText("Play")
+				self.play_btn.setStyleSheet("background-color: lightblue;")
+
+		elif b_type == BUTTON_TYPES["SAVE"]:
+			if self.timer.end_timer() >= STORE_LIMIT:
+				self.timer.title = self.task_box.currentText()
+				self.timer.note = self.text_box.text()
+				self.timer.store_time(TIMER_FILE, get_system_date())
+				self.label.setText("00:00")
+				self.play_btn.setText("Start")
+
+				self.play_btn.setStyleSheet("")
+				self.save_btn.setEnabled(False)
+				self.notifictn_count = 1
+
+		elif b_type == BUTTON_TYPES["RESET"]:
+			self.timer.restart_timer()
+			self.label.setText("00:00")
+			self.play_btn.setText("Start")
+
+			self.play_btn.setStyleSheet("")
+			self.notifictn_count = 1
+
+
+	def get_time(self):
+		return self.timer.get_elapsed_time()
+
+	def update_time(self):
+		if not self.timer.isEnd:
+			self.label.setText(format_time(self.get_time()))
+
 
 
 
