@@ -19,6 +19,7 @@ MIN_SIZE = 0.5
 SPACING = 10
 LAYOUT_COLOUR = "lightGray"
 TIMER_FONT_SIZE = 90
+DESCRIPTION_LENGTH = 100
 
 class MainWindow(QMainWindow):
 
@@ -28,7 +29,7 @@ class MainWindow(QMainWindow):
 		self.setWindowTitle("Task Tracker")
 		self.setMinimumSize(QSize(int(width), int(height)))
 
-		self.tasks = ["Work", "Uni", "Projects"]
+		self.tasks = ["Uni", "Projects", "Work"]
 
 		self.base_layout = QHBoxLayout()
 		self.left_layout = QVBoxLayout()
@@ -38,7 +39,7 @@ class MainWindow(QMainWindow):
 		self.base_layout.setSpacing(SPACING)
 
 		self.setup_left_layout()
-		self.setup_timer("Work", "idk")
+		self.setup_timer("Work", "didn't")
 		self.setup_right_layout()
 
 
@@ -62,7 +63,8 @@ class MainWindow(QMainWindow):
 		self.add_time_widg = Color(LAYOUT_COLOUR)
 		self.manual_time_widgets()
 
-		self.add_time_widg.setLayout( self.add_time_layout )
+		self.add_time_widg.setLayout(
+			 self.add_time_layout )
 		self.left_layout.addWidget(self.add_time_widg, alignment=Qt.AlignVCenter)
 
 		self.left_layout.addWidget(Color(LAYOUT_COLOUR))
@@ -81,11 +83,11 @@ class MainWindow(QMainWindow):
 		self.timer_label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
 		self.timer_layout.addWidget(self.timer_label, alignment=Qt.AlignVCenter)
 
+
 		self.btn_text = []
 		self.play_btn = QPushButton(BUTTON_TYPES["PLAY"])
 		self.play_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
 		self.play_btn.clicked.connect(lambda: self.timer_btn_events(BUTTON_TYPES["PLAY"]))
-		self.timer_layout.addWidget(self.play_btn, Qt.AlignHCenter | Qt.AlignVCenter)
 
 		self.save_btn = QPushButton(BUTTON_TYPES["SAVE"])
 		self.save_btn.clicked.connect(lambda: self.timer_btn_events(BUTTON_TYPES["SAVE"]))
@@ -95,11 +97,29 @@ class MainWindow(QMainWindow):
 		self.reset_btn.clicked.connect(lambda: self.timer_btn_events(BUTTON_TYPES["RESET"]))
 		self.reset_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
 
+
+		self.t_task_box = QComboBox()
+		self.t_task_box.setMinimumWidth(100)
+		self.t_task_box.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		self.t_task_box.addItems(self.tasks)
+
+		self.t_text_box = QLineEdit()
+		self.t_text_box.setMaxLength(DESCRIPTION_LENGTH)
+		self.t_text_box.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+		self.t_text_box.setPlaceholderText("Short Description")
+
+
 		self.t_btn_layout = QHBoxLayout()
+		self.timer_layout.addWidget(self.play_btn, Qt.AlignHCenter | Qt.AlignVCenter)
 		self.t_btn_layout.addWidget(self.save_btn, alignment=Qt.AlignTop)
 		self.t_btn_layout.addWidget(self.reset_btn, alignment=Qt.AlignTop)
-
 		self.timer_layout.addLayout(self.t_btn_layout)
+
+		self.t_dscrpt_layout = QHBoxLayout()
+		self.t_dscrpt_layout.addWidget(self.t_text_box)
+		self.t_dscrpt_layout.addWidget(self.t_task_box)
+		self.timer_layout.addLayout(self.t_dscrpt_layout)
+
 		self.timer_widg = Color(LAYOUT_COLOUR)
 		self.timer_widg.setLayout( self.timer_layout )
 		self.base_layout.addWidget(self.timer_widg, alignment=Qt.AlignVCenter)
@@ -130,6 +150,8 @@ class MainWindow(QMainWindow):
 				self.play_btn.setText("Play")
 		elif b_type == BUTTON_TYPES["SAVE"]:
 			if self.timer.end_timer() >= STORE_LIMIT:
+				self.timer.title = self.t_task_box.currentText()
+				self.timer.note = self.t_text_box.text()
 				self.timer.store_time(TIMER_FILE, get_system_date())
 				self.timer_label.setText("00:00")
 				self.play_btn.setText("Start")
@@ -160,7 +182,7 @@ class MainWindow(QMainWindow):
 
 		self.text_box = QLineEdit()
 		self.text_box.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
-		self.text_box.setMaxLength(100)
+		self.text_box.setMaxLength(DESCRIPTION_LENGTH)
 		self.text_box.setPlaceholderText("Short Description")
 		self.text_box.setHidden(True)
 

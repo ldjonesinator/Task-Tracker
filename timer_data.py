@@ -1,3 +1,4 @@
+import math
 from datetime import datetime
 
 import matplotlib.pyplot as plt
@@ -19,7 +20,7 @@ def get_system_date():
 	return now.strftime("%d/%m/%Y")
 
 def format_text(title, date, tt, st, et, note):
-	t_time = round(tt / 60) # in seconds
+	t_time = math.floor(tt / 60) # convert to minutes
 	if title == "FALSE":
 		return f"{date},{t_time},{st}-{et},{note},,\n"
 	return f"{title},{date},{t_time},{st}-{et},{note},,\n"
