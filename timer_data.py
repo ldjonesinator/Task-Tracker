@@ -149,6 +149,7 @@ def statistic_pie_chart(filename, task, t_type, title):
 	plt.show()
 
 
+
 if __name__ == "__main__":
 	print(find_statistic("times.csv", "Uni", "DURATION"))
 	print(find_statistic("times.csv", "Uni", "NOTE"))

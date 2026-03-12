@@ -2,7 +2,8 @@ import sys
 
 from PyQt5.QtCore import QSize, Qt, QTimer, QDateTime
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-							 QSizePolicy, QPushButton, QLineEdit, QComboBox, QDateTimeEdit, QSpinBox)
+							 QSizePolicy, QPushButton, QLineEdit, QComboBox, QDateTimeEdit, QSpinBox,
+							 QSystemTrayIcon, QStyle)
 from PyQt5.QtGui import QFont, QPalette, QColor
 
 from datetime import time as dtime
@@ -20,6 +21,7 @@ SPACING = 10
 LAYOUT_COLOUR = "lightGray"
 TIMER_FONT_SIZE = 90
 DESCRIPTION_LENGTH = 100
+NOTIFICATION_CHECK_TIME = 15 # minutes
 
 class MainWindow(QMainWindow):
 
@@ -39,7 +41,7 @@ class MainWindow(QMainWindow):
 		self.base_layout.setSpacing(SPACING)
 
 		self.setup_left_layout()
-		self.setup_timer("Work", "didn't")
+		self.setup_timer("fail", "failed to add note")
 		self.setup_right_layout()
 
 
@@ -47,9 +49,16 @@ class MainWindow(QMainWindow):
 		widget.setLayout(self.base_layout)
 		self.setCentralWidget(widget)
 
-		self.qtimer = QTimer(self)
-		self.qtimer.timeout.connect(self.update_time)
-		self.qtimer.start(1000)
+		self.timer_refresh = QTimer(self)
+		self.timer_refresh.timeout.connect(self.update_time)
+		self.timer_refresh.start(1000)
+
+		self.notifictn_count = 1
+		self.notification_check = QTimer(self)
+		self.timer_refresh.timeout.connect(lambda: self.check_send_notification("Timer Running", "Don't forget to stop the timer!",
+																				self.timer.get_elapsed_time()))
+		self.timer_refresh.start(10000)
+
 
 	def setup_left_layout(self):
 		self.m_widg_hide = False
@@ -91,6 +100,7 @@ class MainWindow(QMainWindow):
 
 		self.save_btn = QPushButton(BUTTON_TYPES["SAVE"])
 		self.save_btn.clicked.connect(lambda: self.timer_btn_events(BUTTON_TYPES["SAVE"]))
+		self.save_btn.setEnabled(False)
 		self.save_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
 
 		self.reset_btn = QPushButton(BUTTON_TYPES["RESET"])
@@ -139,15 +149,22 @@ class MainWindow(QMainWindow):
 
 	def timer_btn_events(self, b_type):
 		if b_type == BUTTON_TYPES["PLAY"]:
-			if self.timer.isEnd:
+			if self.timer.isEnd: # clicked start
 				self.timer.start_timer(get_system_time())
 				self.play_btn.setText("Pause")
+				self.save_btn.setEnabled(True)
+				# self.save_btn.setStyleSheet("background-color: lightblue;")
+				self.play_btn.setStyleSheet("background-color: red;")
+
 			elif self.timer.isPaused:
 				self.timer.resume_timer()
 				self.play_btn.setText("Pause")
+				self.play_btn.setStyleSheet("background-color: red;")
 			else:
 				self.timer.pause_timer()
 				self.play_btn.setText("Play")
+				self.play_btn.setStyleSheet("background-color: lightblue;")
+
 		elif b_type == BUTTON_TYPES["SAVE"]:
 			if self.timer.end_timer() >= STORE_LIMIT:
 				self.timer.title = self.t_task_box.currentText()
@@ -156,10 +173,17 @@ class MainWindow(QMainWindow):
 				self.timer_label.setText("00:00")
 				self.play_btn.setText("Start")
 
+				self.play_btn.setStyleSheet("")
+				self.save_btn.setEnabled(False)
+				self.notifictn_count = 1
+
 		elif b_type == BUTTON_TYPES["RESET"]:
 			self.timer.restart_timer()
 			self.timer_label.setText("00:00")
 			self.play_btn.setText("Start")
+
+			self.play_btn.setStyleSheet("")
+			self.notifictn_count = 1
 
 	def manual_time_widgets(self):
 
@@ -241,7 +265,22 @@ class MainWindow(QMainWindow):
 		time_store_in_file(TIMER_FILE, title, date.strftime("%d/%m/%Y"), duration * 60, start.strftime("%H:%M"), end.strftime("%H:%M"), note)
 		self.toggle_manual_time_widg()
 
+	def check_send_notification(self, title, message, timer):
+		tray_icon = QSystemTrayIcon()
 
+		icon = app.style().standardIcon(QStyle.SP_ComputerIcon)
+		tray_icon.setIcon(icon)
+
+		if timer > (NOTIFICATION_CHECK_TIME * 60 * self.notifictn_count):
+			tray_icon.show()
+
+			tray_icon.showMessage(
+				title,
+				message,
+				QSystemTrayIcon.Information,
+				2000 # 2 seconds timeout
+			)
+			self.notifictn_count += 1
 
 
 
