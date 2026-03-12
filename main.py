@@ -61,7 +61,6 @@ class MainWindow(QMainWindow):
 
 
 	def setup_left_layout(self):
-		self.m_widg_hide = False
 
 		self.add_time_layout = QVBoxLayout()
 		self.add_time = QPushButton("Add a Task Time")
@@ -94,18 +93,18 @@ class MainWindow(QMainWindow):
 
 
 		self.btn_text = []
-		self.play_btn = QPushButton(BUTTON_TYPES["PLAY"])
-		self.play_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
-		self.play_btn.clicked.connect(lambda: self.timer_btn_events(BUTTON_TYPES["PLAY"]))
 
-		self.save_btn = QPushButton(BUTTON_TYPES["SAVE"])
-		self.save_btn.clicked.connect(lambda: self.timer_btn_events(BUTTON_TYPES["SAVE"]))
-		self.save_btn.setEnabled(False)
-		self.save_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+		self.play_btn = create_button(BUTTON_TYPES["PLAY"],
+			lambda: self.timer_btn_events(BUTTON_TYPES["PLAY"])
+		)
 
-		self.reset_btn = QPushButton(BUTTON_TYPES["RESET"])
-		self.reset_btn.clicked.connect(lambda: self.timer_btn_events(BUTTON_TYPES["RESET"]))
-		self.reset_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+		self.save_btn = create_button(BUTTON_TYPES["SAVE"],
+			lambda: self.timer_btn_events(BUTTON_TYPES["SAVE"]), False
+		)
+
+		self.reset_btn = create_button(BUTTON_TYPES["RESET"],
+			lambda: self.timer_btn_events(BUTTON_TYPES["RESET"])
+		)
 
 
 		self.t_task_box = QComboBox()
@@ -121,14 +120,13 @@ class MainWindow(QMainWindow):
 
 		self.t_btn_layout = QHBoxLayout()
 		self.timer_layout.addWidget(self.play_btn, Qt.AlignHCenter | Qt.AlignVCenter)
-		self.t_btn_layout.addWidget(self.save_btn, alignment=Qt.AlignTop)
-		self.t_btn_layout.addWidget(self.reset_btn, alignment=Qt.AlignTop)
-		self.timer_layout.addLayout(self.t_btn_layout)
+		self.timer_layout.addLayout(
+			h_layout(self.save_btn, self.reset_btn)
+		)
 
-		self.t_dscrpt_layout = QHBoxLayout()
-		self.t_dscrpt_layout.addWidget(self.t_text_box)
-		self.t_dscrpt_layout.addWidget(self.t_task_box)
-		self.timer_layout.addLayout(self.t_dscrpt_layout)
+		self.timer_layout.addLayout(
+			h_layout(self.t_text_box, self.t_task_box)
+		)
 
 		self.timer_widg = Color(LAYOUT_COLOUR)
 		self.timer_widg.setLayout( self.timer_layout )
@@ -187,48 +185,41 @@ class MainWindow(QMainWindow):
 
 	def manual_time_widgets(self):
 
-		self.task_box = QComboBox()
-		self.task_box.setMinimumWidth(200)
-		self.task_box.addItems(self.tasks)
-		self.task_box.setHidden(True)
+		self.manual_widgets = {
+			"task": QComboBox(),
+			"time": QDateTimeEdit(),
+			"duration": QSpinBox(),
+			"text": QLineEdit(),
+			"confirm": create_button("Store Time", self.store_manual)
+		}
+
+		self.manual_widgets["task"].setMinimumWidth(200)
+		self.manual_widgets["task"].addItems(self.tasks)
+
+		self.manual_widgets["time"].setDateTime(QDateTime.currentDateTime())
+		self.manual_widgets["time"].setDisplayFormat("dd/MM/yyyy hh:mm")
+
+		self.manual_widgets["duration"].setRange(0, 5940)
+		self.manual_widgets["duration"].setSingleStep(15)
+		self.manual_widgets["duration"].setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+
+		self.manual_widgets["text"].setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+		self.manual_widgets["text"].setMaxLength(DESCRIPTION_LENGTH)
+		self.manual_widgets["text"].setPlaceholderText("Short Description")
+
+		self.m_widg_hide = True
+		self.toggle_manual_time_widg()
 
 
-		self.time_box = QDateTimeEdit()
-		self.time_box.setDateTime(QDateTime.currentDateTime())
-		self.time_box.setDisplayFormat("dd/MM/yyyy hh:mm")
-		self.time_box.setHidden(True)
-
-		self.duration_box = QSpinBox()
-		self.duration_box.setRange(0, 5940)
-		self.duration_box.setSingleStep(15)
-		self.duration_box.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
-		self.duration_box.setHidden(True)
-
-		self.text_box = QLineEdit()
-		self.text_box.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
-		self.text_box.setMaxLength(DESCRIPTION_LENGTH)
-		self.text_box.setPlaceholderText("Short Description")
-		self.text_box.setHidden(True)
-
-		self.confirm_btn = QPushButton("Store Time")
-		self.confirm_btn.clicked.connect(self.store_manual)
-		self.confirm_btn.setHidden(True)
-
-		self.selection_layout = QHBoxLayout()
-
-		self.selection_layout.addWidget(self.task_box, alignment=Qt.AlignVCenter)
-		self.selection_layout.addWidget(self.time_box, alignment=Qt.AlignVCenter)
-		self.selection_layout.addWidget(self.duration_box, alignment=Qt.AlignVCenter)
-		self.add_time_layout.addLayout(self.selection_layout)
-		self.add_time_layout.addWidget(self.text_box, alignment=Qt.AlignVCenter)
-		self.add_time_layout.addWidget(self.confirm_btn, alignment=Qt.AlignVCenter)
+		self.add_time_layout.addLayout(
+			h_layout(self.manual_widgets["task"], self.manual_widgets["time"], self.manual_widgets["duration"])
+		)
+		self.add_time_layout.addWidget(self.manual_widgets["text"], alignment=Qt.AlignVCenter)
+		self.add_time_layout.addWidget(self.manual_widgets["confirm"], alignment=Qt.AlignVCenter)
 
 	def toggle_manual_time_widg(self):
-		self.task_box.setHidden(self.m_widg_hide)
-		self.time_box.setHidden(self.m_widg_hide)
-		self.duration_box.setHidden(self.m_widg_hide)
-		self.text_box.setHidden(self.m_widg_hide)
-		self.confirm_btn.setHidden(self.m_widg_hide)
+		for w in self.manual_widgets.values():
+			w.setHidden(self.m_widg_hide)
 
 		if self.m_widg_hide:
 			self.add_time.setText("Add a Task Time")
@@ -238,15 +229,15 @@ class MainWindow(QMainWindow):
 		self.m_widg_hide = not self.m_widg_hide
 
 	def store_manual(self):
-		title = self.task_box.currentText()
-		duration = self.duration_box.value()
+		title = self.manual_widgets["task"].currentText()
+		duration = self.manual_widgets["duration"].value()
 		d_hours = duration // 60
 		d_mins = duration - d_hours * 60
 
 
-		note = self.text_box.text()
+		note = self.manual_widgets["text"].text()
 
-		dt = self.time_box.dateTime()
+		dt = self.manual_widgets["time"].dateTime()
 
 		year = dt.date().year()
 		month = dt.date().month()
@@ -265,6 +256,7 @@ class MainWindow(QMainWindow):
 		time_store_in_file(TIMER_FILE, title, date.strftime("%d/%m/%Y"), duration * 60, start.strftime("%H:%M"), end.strftime("%H:%M"), note)
 		self.toggle_manual_time_widg()
 
+# add setting to turn on/off notifications
 	def check_send_notification(self, title, message, timer):
 		tray_icon = QSystemTrayIcon()
 
@@ -284,6 +276,29 @@ class MainWindow(QMainWindow):
 
 
 
+def create_button(text, callback=None, enabled=True, hidden=False, size_x=QSizePolicy.Minimum, size_y=QSizePolicy.Fixed):
+	btn = QPushButton(text)
+	btn.setSizePolicy(size_x, size_y)
+	btn.setEnabled(enabled)
+	btn.setHidden(hidden)
+
+	if callback:
+		btn.clicked.connect(callback)
+
+	return btn
+
+def h_layout(*widgets):
+	layout = QHBoxLayout()
+	for w in widgets:
+		layout.addWidget(w)
+	return layout
+
+
+def v_layout(*widgets):
+	layout = QVBoxLayout()
+	for w in widgets:
+		layout.addWidget(w)
+	return layout
 
 
 
