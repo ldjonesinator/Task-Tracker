@@ -9,7 +9,10 @@ from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtCore import pyqtSignal
 
 
-DATA_TYPE = {"DATE": 0, "DURATION": 1, "TIMES": 2, "NOTE": 3}
+DATA_TYPE = {"DATE": 0, "TOTAL": 1, "DURATION": 1, "TIMES": 2, "NOTE": 3}
+TIMER_FILE = "times.csv"
+DELIM = ','
+
 
 def get_system_time():
 	now = datetime.now().time()
@@ -25,14 +28,18 @@ def format_text(title, date, tt, st, et, note):
 		return f"{date},{t_time},{st}-{et},{note},,\n"
 	return f"{title},{date},{t_time},{st}-{et},{note},,\n"
 
-def format_time(seconds):
+def format_time(seconds, text_format=False):
 	left_over = round(seconds)
 	hours = left_over // 60 // 60
 	left_over -= hours * 60 * 60
 	minutes = left_over // 60
 	left_over -= minutes * 60
 	secs = left_over
+	if text_format:
+		return f"{hours} hrs, {minutes} mins"
 	return f"{hours:02d}:{minutes:02d}"
+
+
 
 def time_store_in_file(filename, title, date, tt, start, end, note):
 	try:
@@ -98,31 +105,9 @@ def get_time_data(filename, delim, task, xi):
 
 	return xs
 
-def graph_time(filename, task):
-	xs = get_time_data(filename, ',', task, DATA_TYPE["DATE"])
-	ys = get_time_data(filename, ',', task, DATA_TYPE["DURATION"])
-
-	zip_data = zip(xs, ys)
-	sorted_data = sorted(zip_data, key=lambda x: datetime.strptime(x[0], '%d/%m/%Y'))
-
-	x_axis = []
-	y_axis = []
-	for i, j in sorted_data:
-		x_axis.append(i)
-		y_axis.append(j)
-
-	plt.plot(x_axis, y_axis)
-	plt.title(task)
-	plt.xlabel("Date")
-	plt.xticks(rotation=45)
-	plt.ylabel("Duration")
-
-	plt.show()
-
-
-def find_statistic(filename, task, t_type):
-	data = get_time_data(filename, ',', task, DATA_TYPE[t_type])
-	if DATA_TYPE[t_type] == DATA_TYPE["DURATION"]:
+def find_statistic(task, t_type):
+	data = get_time_data(TIMER_FILE, DELIM, task, DATA_TYPE[t_type])
+	if DATA_TYPE[t_type] == DATA_TYPE["TOTAL"]:
 		total_spent = 0
 		for time in data:
 			total_spent += int(time)
@@ -142,8 +127,31 @@ def find_statistic(filename, task, t_type):
 
 	return -1
 
-def statistic_pie_chart(filename, task, t_type, title):
-	stat_dict = find_statistic(filename, task, t_type)
+
+
+def graph_time(filename, task):
+	xs = get_time_data(filename, DELIM, task, DATA_TYPE["DATE"])
+	ys = get_time_data(filename, DELIM, task, DATA_TYPE["DURATION"])
+
+	zip_data = zip(xs, ys)
+	sorted_data = sorted(zip_data, key=lambda x: datetime.strptime(x[0], '%d/%m/%Y'))
+
+	x_axis = []
+	y_axis = []
+	for i, j in sorted_data:
+		x_axis.append(i)
+		y_axis.append(j)
+
+	plt.plot(x_axis, y_axis)
+	plt.title(task)
+	plt.xlabel("Date")
+	plt.xticks(rotation=45)
+	plt.ylabel("Duration")
+
+	plt.show()
+
+def statistic_pie_chart(task, t_type, title):
+	stat_dict = find_statistic(task, t_type)
 	plt.pie(stat_dict.values(), labels = stat_dict.keys(), autopct='%1.0f%%')
 	plt.title(title)
 	plt.show()
@@ -151,7 +159,7 @@ def statistic_pie_chart(filename, task, t_type, title):
 
 
 if __name__ == "__main__":
-	print(find_statistic("times.csv", "Uni", "DURATION"))
-	print(find_statistic("times.csv", "Uni", "NOTE"))
-	statistic_pie_chart("times.csv", "Uni", "NOTE", "Activity type for Uni")
+	print(find_statistic("Uni", "DURATION"))
+	print(find_statistic("Uni", "NOTE"))
+	statistic_pie_chart("Uni", "NOTE", "Activity type for Uni")
 	graph_time("times.csv", "Work")

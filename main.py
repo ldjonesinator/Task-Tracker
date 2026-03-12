@@ -1,4 +1,5 @@
 import sys
+import math
 
 from PyQt5.QtCore import QSize, Qt, QTimer, QDateTime
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
@@ -13,7 +14,7 @@ from datetime import datetime
 from layout_colour import Color
 
 from timer import Timer, BUTTON_TYPES, STORE_LIMIT, TIMER_FILE
-from timer_data import time_store_in_file, format_time, get_system_time, get_system_date
+import timer_data as td
 
 
 MIN_SIZE = 0.5
@@ -65,15 +66,23 @@ class MainWindow(QMainWindow):
 
 		self.add_time_layout.addWidget(self.add_time, alignment=Qt.AlignVCenter)
 
+		self.make_manual_time_widgets()
 		self.add_time_widg = Color(LAYOUT_COLOUR)
-		self.manual_time_widgets()
+		self.add_time_widg.setLayout( self.add_time_layout )
 
-		self.add_time_widg.setLayout(
-			 self.add_time_layout )
+
 		self.left_layout.addWidget(self.add_time_widg, alignment=Qt.AlignVCenter)
 
 		self.left_layout.addWidget(Color(LAYOUT_COLOUR))
-		self.left_layout.addWidget(Color(LAYOUT_COLOUR))
+
+		self.stats_layout = QVBoxLayout()
+		self.make_stat_widgets()
+
+		self.stats_widg = Color(LAYOUT_COLOUR)
+		self.stats_widg.setLayout( self.stats_layout )
+		self.left_layout.addWidget(self.stats_widg, alignment=Qt.AlignBottom)
+
+
 		self.base_layout.addLayout( self.left_layout )
 
 
@@ -84,7 +93,7 @@ class MainWindow(QMainWindow):
 		self.base_layout.addLayout( self.right_layout )
 
 
-	def manual_time_widgets(self):
+	def make_manual_time_widgets(self):
 
 		self.manual_widgets = {
 			"task": QComboBox(),
@@ -118,9 +127,31 @@ class MainWindow(QMainWindow):
 		self.add_time_layout.addWidget(self.manual_widgets["text"], alignment=Qt.AlignVCenter)
 		self.add_time_layout.addWidget(self.manual_widgets["confirm"], alignment=Qt.AlignVCenter)
 
+	def make_stat_widgets(self):
+		self.stat_widgets = {
+			"total": [QLabel(), ""],
+			"weekly": [QLabel(), ""],
+			"monthly": [QLabel(), ""]
+		}
+		for task in self.tasks:
+			self.stat_widgets[task] = [QLabel(), ""]
+
+		self.update_stat_times()
+
+		self.stats_layout.addLayout(h_layout(self.stat_widgets["total"][0],
+											 self.stat_widgets["weekly"][0],
+											 self.stat_widgets["monthly"][0]))
+
+		for task in self.tasks:
+			self.stats_layout.addWidget(self.stat_widgets[task][0])
+
+
+
+
+
 	def toggle_manual_time_widg(self):
-		for w in self.manual_widgets.values():
-			w.setHidden(self.m_widg_hide)
+		hide_widgets(self.manual_widgets.values(), self.m_widg_hide)
+
 
 		if self.m_widg_hide:
 			self.add_time.setText("Add a Task Time")
@@ -154,8 +185,27 @@ class MainWindow(QMainWindow):
 		end = dtime(e_hours % 24, e_mins)
 
 		print(date.strftime("%d/%m/%Y"), " : ", end.strftime("%H:%M"), duration)
-		time_store_in_file(TIMER_FILE, title, date.strftime("%d/%m/%Y"), duration * 60, start.strftime("%H:%M"), end.strftime("%H:%M"), note)
+		td.time_store_in_file(TIMER_FILE, title, date.strftime("%d/%m/%Y"), duration * 60, start.strftime("%H:%M"), end.strftime("%H:%M"), note)
 		self.toggle_manual_time_widg()
+
+
+	def update_stat_times(self):
+		total = 0
+		for task in self.tasks:
+			time = td.find_statistic(task, "TOTAL") * 60
+			self.stat_widgets[task][1] = f"{task} Total Time: {td.format_time(time, True)}"
+			total += time
+
+		self.stat_widgets["weekly"][1] = f"| This Week: {math.ceil(total/60/60)} hrs"
+		self.stat_widgets["monthly"][1] = f"| This Month: {math.ceil(total/60/60)} hrs"
+		self.stat_widgets["total"][1] = f"Total Time Spent: {math.ceil(total/60/60)} hrs"
+
+		for key in self.stat_widgets.keys():
+			self.stat_widgets[key][0].setStyleSheet("color: grey; font: 10pt;")
+			self.stat_widgets[key][0].setText(self.stat_widgets[key][1])
+
+
+
 
 # add setting to turn on/off notifications
 	def check_send_notification(self, title, message, timer):
@@ -238,7 +288,7 @@ class TimerWidget(QWidget):
 	def timer_btn_events(self, b_type):
 		if b_type == BUTTON_TYPES["PLAY"]:
 			if self.timer.isEnd: # clicked start
-				self.timer.start_timer(get_system_time())
+				self.timer.start_timer(td.get_system_time())
 				self.play_btn.setText("Pause")
 				self.save_btn.setEnabled(True)
 				# self.save_btn.setStyleSheet("background-color: lightblue;")
@@ -257,7 +307,7 @@ class TimerWidget(QWidget):
 			if self.timer.end_timer() >= STORE_LIMIT:
 				self.timer.title = self.task_box.currentText()
 				self.timer.note = self.text_box.text()
-				self.timer.store_time(TIMER_FILE, get_system_date())
+				self.timer.store_time(TIMER_FILE, td.get_system_date())
 				self.label.setText("00:00")
 				self.play_btn.setText("Start")
 
@@ -279,7 +329,7 @@ class TimerWidget(QWidget):
 
 	def update_time(self):
 		if not self.timer.isEnd:
-			self.label.setText(format_time(self.get_time()))
+			self.label.setText(td.format_time(self.get_time()))
 
 
 
@@ -307,6 +357,10 @@ def v_layout(*widgets):
 	for w in widgets:
 		layout.addWidget(w)
 	return layout
+
+def hide_widgets(widgets, hide):
+	for w in widgets:
+		w.setHidden(hide)
 
 
 
