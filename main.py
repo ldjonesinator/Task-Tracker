@@ -17,11 +17,16 @@ from timer import Timer, BUTTON_TYPES, STORE_LIMIT, TIMER_FILE
 import timer_data as td
 
 
-MIN_SIZE = 0.5
+MIN_SIZE = 0.55
 SPACING = 10
-LAYOUT_COLOUR = "lightGray"
-TIMER_FONT_SIZE = 90
+LAYOUT_COLOUR = QColor(48, 48, 48)
+
+TIMER_FONT_SIZE = 120
+BUTTON_WIDTH = 100
+BUTTON_HEIGHT = 50
+
 DESCRIPTION_LENGTH = 100
+
 NOTIFICATION_CHECK_TIME = 15 # minutes
 
 class MainWindow(QMainWindow):
@@ -30,7 +35,19 @@ class MainWindow(QMainWindow):
 		super().__init__()
 
 		self.setWindowTitle("Task Tracker")
-		self.setMinimumSize(QSize(int(width), int(height)))
+		self.setFixedSize(QSize(int(width), int(height)))
+		# self.setMinimumSize(QSize(int(width), int(height)))
+
+		palette = QPalette()
+		palette.setColor(QPalette.ColorRole.Window, QColor(50, 50, 50))
+		palette.setColor(QPalette.ColorRole.WindowText, QColor(210, 210, 210))
+		palette.setColor(QPalette.ColorRole.Text, QColor(210, 210, 210))
+		palette.setColor(QPalette.ColorRole.Base, QColor(90, 90, 90))
+		palette.setColor(QPalette.ColorRole.PlaceholderText, QColor(50, 50, 50))
+		palette.setColor(QPalette.ColorRole.Button, QColor(50, 50, 50))
+		palette.setColor(QPalette.ColorRole.ButtonText, QColor('white'))
+		self.setPalette(palette)
+
 
 		self.tasks = ["Uni", "Projects", "Work"]
 
@@ -39,7 +56,7 @@ class MainWindow(QMainWindow):
 		self.right_layout = QVBoxLayout()
 
 		self.base_layout.setContentsMargins(SPACING, SPACING, SPACING, SPACING)
-		self.base_layout.setSpacing(SPACING)
+		self.base_layout.setSpacing(SPACING*4)
 
 		self.setup_left_layout()
 		self.timer_widget = TimerWidget(self.tasks, "fail", "failed to add note")
@@ -61,9 +78,7 @@ class MainWindow(QMainWindow):
 	def setup_left_layout(self):
 
 		self.add_time_layout = QVBoxLayout()
-		self.add_time = QPushButton("Add a Task Time")
-		self.add_time.clicked.connect(self.toggle_manual_time_widg)
-
+		self.add_time = create_button("Add a Task Time", self.toggle_manual_time_widg)
 		self.add_time_layout.addWidget(self.add_time, alignment=Qt.AlignVCenter)
 
 		self.make_manual_time_widgets()
@@ -71,7 +86,7 @@ class MainWindow(QMainWindow):
 		self.add_time_widg.setLayout( self.add_time_layout )
 
 
-		self.left_layout.addWidget(self.add_time_widg, alignment=Qt.AlignVCenter)
+		self.left_layout.addWidget(self.add_time_widg, alignment=Qt.AlignTop)
 
 		self.left_layout.addWidget(Color(LAYOUT_COLOUR))
 
@@ -133,17 +148,18 @@ class MainWindow(QMainWindow):
 			"weekly": [QLabel(), ""],
 			"monthly": [QLabel(), ""]
 		}
-		for task in self.tasks:
-			self.stat_widgets[task] = [QLabel(), ""]
-
-		self.update_stat_times()
 
 		self.stats_layout.addLayout(h_layout(self.stat_widgets["total"][0],
 											 self.stat_widgets["weekly"][0],
 											 self.stat_widgets["monthly"][0]))
 
 		for task in self.tasks:
+			self.stat_widgets[task] = [QLabel(), ""]
 			self.stats_layout.addWidget(self.stat_widgets[task][0])
+
+
+		self.update_stat_times()
+
 
 
 
@@ -201,7 +217,6 @@ class MainWindow(QMainWindow):
 		self.stat_widgets["total"][1] = f"Total Time Spent: {math.ceil(total/60/60)} hrs"
 
 		for key in self.stat_widgets.keys():
-			self.stat_widgets[key][0].setStyleSheet("color: grey; font: 10pt;")
 			self.stat_widgets[key][0].setText(self.stat_widgets[key][1])
 
 
@@ -244,13 +259,11 @@ class TimerWidget(QWidget):
 		self.label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
 		self.layout.addWidget(self.label, alignment=Qt.AlignVCenter)
 
-
-
-
 		self.btn_text = []
 
 		self.play_btn = create_button(BUTTON_TYPES["PLAY"],
-			lambda: self.timer_btn_events(BUTTON_TYPES["PLAY"])
+			lambda: self.timer_btn_events(BUTTON_TYPES["PLAY"]),
+			height=int(BUTTON_HEIGHT*1.5)
 		)
 
 		self.save_btn = create_button(BUTTON_TYPES["SAVE"],
@@ -273,7 +286,7 @@ class TimerWidget(QWidget):
 		self.text_box.setPlaceholderText("Short Description")
 
 
-		self.layout.addWidget(self.play_btn, Qt.AlignHCenter | Qt.AlignVCenter)
+		self.layout.addWidget(self.play_btn)
 		self.layout.addLayout(
 			h_layout(self.save_btn, self.reset_btn)
 		)
@@ -334,11 +347,14 @@ class TimerWidget(QWidget):
 
 
 
-def create_button(text, callback=None, enabled=True, hidden=False, size_x=QSizePolicy.Minimum, size_y=QSizePolicy.Fixed):
+def create_button(text, callback=None, enabled=True, hidden=False, width=BUTTON_WIDTH, height=BUTTON_HEIGHT,
+				  size_x=QSizePolicy.Minimum, size_y=QSizePolicy.Fixed):
 	btn = QPushButton(text)
 	btn.setSizePolicy(size_x, size_y)
 	btn.setEnabled(enabled)
 	btn.setHidden(hidden)
+	btn.setMinimumWidth(width)
+	btn.setMinimumHeight(height)
 
 	if callback:
 		btn.clicked.connect(callback)

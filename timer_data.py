@@ -140,12 +140,13 @@ def graph_time(filename, task):
 	y_axis = []
 	for i, j in sorted_data:
 		x_axis.append(i)
-		y_axis.append(j)
+		y_axis.append(int(j))
 
-	plt.plot(x_axis, y_axis)
+	plt.bar(x_axis, y_axis)
 	plt.title(task)
 	plt.xlabel("Date")
 	plt.xticks(rotation=45)
+	plt.yticks(y_axis.sort())
 	plt.ylabel("Duration")
 
 	plt.show()
@@ -162,4 +163,4 @@ if __name__ == "__main__":
 	print(find_statistic("Uni", "DURATION"))
 	print(find_statistic("Uni", "NOTE"))
 	statistic_pie_chart("Uni", "NOTE", "Activity type for Uni")
-	graph_time("times.csv", "Work")
+	graph_time("times.csv", "Uni")
