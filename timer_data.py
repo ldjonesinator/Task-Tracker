@@ -115,13 +115,14 @@ def find_statistic(task, t_type):
 		return total_spent
 
 	elif DATA_TYPE[t_type] == DATA_TYPE["NOTE"]:
+		time = get_time_data(TIMER_FILE, DELIM, task, DATA_TYPE["DURATION"])
 		note_count = {}
-		for note in data:
-			note_edit = note.strip().lower()
+		for i in range(len(data)):
+			note_edit = data[i].strip().lower()
 			if note_edit in note_count:
-				note_count[note_edit] += 1
+				note_count[note_edit] += int(time[i])
 			else:
-				note_count[note_edit] = 1
+				note_count[note_edit] = int(time[i])
 
 		return note_count
 
@@ -162,5 +163,5 @@ def statistic_pie_chart(task, t_type, title):
 if __name__ == "__main__":
 	print(find_statistic("Uni", "DURATION"))
 	print(find_statistic("Uni", "NOTE"))
-	statistic_pie_chart("Uni", "NOTE", "Activity type for Uni")
+	statistic_pie_chart("Uni", "NOTE", "Time Spent Per Uni Activity")
 	graph_time("times.csv", "Uni")
