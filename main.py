@@ -144,19 +144,14 @@ class MainWindow(QMainWindow):
 
 	def make_stat_widgets(self):
 		self.stat_widgets = {
-			"total": [QLabel(), ""],
-			"weekly": [QLabel(), ""],
-			"monthly": [QLabel(), ""]
+			"total": [QLabel(), ""]
 		}
-
-		self.stats_layout.addLayout(h_layout(self.stat_widgets["total"][0],
-											 self.stat_widgets["weekly"][0],
-											 self.stat_widgets["monthly"][0]))
 
 		for task in self.tasks:
 			self.stat_widgets[task] = [QLabel(), ""]
 			self.stats_layout.addWidget(self.stat_widgets[task][0])
 
+		self.stats_layout.addLayout(h_layout(self.stat_widgets["total"][0]))
 
 		self.update_stat_times()
 
@@ -203,18 +198,25 @@ class MainWindow(QMainWindow):
 		print(date.strftime("%d/%m/%Y"), " : ", end.strftime("%H:%M"), duration)
 		td.time_store_in_file(TIMER_FILE, title, date.strftime("%d/%m/%Y"), duration * 60, start.strftime("%H:%M"), end.strftime("%H:%M"), note)
 		self.toggle_manual_time_widg()
+		self.update_stat_times()
 
 
 	def update_stat_times(self):
 		total = 0
+		time_m = 0
+		time_w = 0
 		for task in self.tasks:
 			time = td.find_statistic(task, "TOTAL") * 60
+			time_m += td.find_statistic(task, "TOTAL_M") * 60
+			time_w += td.find_statistic(task, "TOTAL_W") * 60
 			self.stat_widgets[task][1] = f"{task} Total Time: {td.format_time(time, True)}"
 			total += time
 
-		self.stat_widgets["weekly"][1] = f"| This Week: {math.ceil(total/60/60)} hrs"
-		self.stat_widgets["monthly"][1] = f"| This Month: {math.ceil(total/60/60)} hrs"
-		self.stat_widgets["total"][1] = f"Total Time Spent: {math.ceil(total/60/60)} hrs"
+		tty = f"Time Spent This Year: {math.ceil(total/60/60)} hrs"
+		ttm = " | " + f"This Month: {math.ceil(time_m/60/60)} hrs"
+		ttw = " | " + f"This Week: {math.ceil(time_w/60/60)} hrs"
+
+		self.stat_widgets["total"][1] = tty + ttm + ttw
 
 		for key in self.stat_widgets.keys():
 			self.stat_widgets[key][0].setText(self.stat_widgets[key][1])

@@ -1,5 +1,5 @@
 import math
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,7 +9,8 @@ from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtCore import pyqtSignal
 
 
-DATA_TYPE = {"DATE": 0, "TOTAL": 1, "DURATION": 1, "TIMES": 2, "NOTE": 3}
+DATA_TYPE = {"DATE": 0, "TOTAL": 1, "TOTAL_M": 1, "TOTAL_W": 1, "TIMES": 2, "NOTE": 3}
+DAYS = {"Mon": 1, "Tue": 2, "Wed": 3, "Thu": 4, "Fri": 5, "Sat": 6, "Sun": 7}
 TIMER_FILE = "times.csv"
 DELIM = ','
 
@@ -105,9 +106,43 @@ def get_time_data(filename, delim, task, xi):
 
 	return xs
 
+
+def get_filter_times(times, dates, date, format="%Y"):
+	new_times = []
+
+	ref_format = date.strftime(format)
+
+	for i in range(len(dates)):
+		d = datetime.strptime(dates[i], "%d/%m/%Y")
+		# print(d.strftime(format), ref_format)
+		if d.strftime(format) == ref_format:
+			new_times.append(times[i])
+
+	return new_times
+
+def get_week_times(times, dates):
+	ref_day = datetime.now().strftime("%a")
+	all_times = []
+	for i in range(DAYS[ref_day]):
+		sub_t = datetime.now() - timedelta(days=DAYS[ref_day]-i - 1)
+		temp_times = get_filter_times(times, dates, sub_t, "%d")
+		for time in temp_times:
+			all_times.append(time)
+
+	return all_times
+
+
 def find_statistic(task, t_type):
 	data = get_time_data(TIMER_FILE, DELIM, task, DATA_TYPE[t_type])
 	if DATA_TYPE[t_type] == DATA_TYPE["TOTAL"]:
+		if t_type == "TOTAL_M":
+			dates = get_time_data(TIMER_FILE, DELIM, task, DATA_TYPE["DATE"])
+			data = get_filter_times(data, dates, datetime.now(), "%m")
+
+		elif t_type == "TOTAL_W":
+			dates = get_time_data(TIMER_FILE, DELIM, task, DATA_TYPE["DATE"])
+			data = get_week_times(data, dates)
+
 		total_spent = 0
 		for time in data:
 			total_spent += int(time)
@@ -115,7 +150,7 @@ def find_statistic(task, t_type):
 		return total_spent
 
 	elif DATA_TYPE[t_type] == DATA_TYPE["NOTE"]:
-		time = get_time_data(TIMER_FILE, DELIM, task, DATA_TYPE["DURATION"])
+		time = get_time_data(TIMER_FILE, DELIM, task, DATA_TYPE["TOTAL"])
 		note_count = {}
 		for i in range(len(data)):
 			note_edit = data[i].strip().lower()
@@ -132,7 +167,7 @@ def find_statistic(task, t_type):
 
 def graph_time(filename, task):
 	xs = get_time_data(filename, DELIM, task, DATA_TYPE["DATE"])
-	ys = get_time_data(filename, DELIM, task, DATA_TYPE["DURATION"])
+	ys = get_time_data(filename, DELIM, task, DATA_TYPE["TOTAL"])
 
 	zip_data = zip(xs, ys)
 	sorted_data = sorted(zip_data, key=lambda x: datetime.strptime(x[0], '%d/%m/%Y'))
@@ -161,7 +196,8 @@ def statistic_pie_chart(task, t_type, title):
 
 
 if __name__ == "__main__":
-	print(find_statistic("Uni", "DURATION"))
-	print(find_statistic("Uni", "NOTE"))
+	print("Total: ", find_statistic("Uni", "TOTAL"))
+	print("Month: ", find_statistic("Uni", "TOTAL_M"))
+	print("Week: ", find_statistic("Uni", "TOTAL_W"))
 	statistic_pie_chart("Uni", "NOTE", "Time Spent Per Uni Activity")
 	graph_time("times.csv", "Uni")
