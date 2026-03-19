@@ -134,6 +134,8 @@ def get_week_times(times, dates):
 
 def find_statistic(task, t_type):
 	data = get_time_data(TIMER_FILE, DELIM, task, DATA_TYPE[t_type])
+	if data == -1:
+		return 0
 	if DATA_TYPE[t_type] == DATA_TYPE["TOTAL"]:
 		if t_type == "TOTAL_M":
 			dates = get_time_data(TIMER_FILE, DELIM, task, DATA_TYPE["DATE"])
@@ -161,7 +163,7 @@ def find_statistic(task, t_type):
 
 		return note_count
 
-	return -1
+	return 0
 
 
 

@@ -49,7 +49,7 @@ class MainWindow(QMainWindow):
 		self.setPalette(palette)
 
 
-		self.tasks = ["Uni", "Projects", "Work"]
+		self.tasks = ["Uni", "Projects", "Work", "Uni Campus"]
 
 		self.base_layout = QHBoxLayout()
 		self.left_layout = QVBoxLayout()

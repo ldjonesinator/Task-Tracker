@@ -1,0 +1,9 @@
+- allow to add a timetable for a certain frequency (e.g. every fortnight or week) and a certain start/end timetable
+
+- add graph button
+
+- add a refresh button with a refresh ICON for the statistics
+
+- make a button for adding a task
+  maybe save the tasks in a text file, or look up how things should be stored for an app
+  like should the data be stored in a csv and if so, how to add a directory for it
