@@ -4,6 +4,8 @@
 
 - add a refresh button with a refresh ICON for the statistics
 
+- make each task have a time spent this week in the statistics
+- make the stats have the time spent this YEAR, MONTH and NOT week but TODAY
+
 - make a button for adding a task
-  maybe save the tasks in a text file, or look up how things should be stored for an app
-  like should the data be stored in a csv and if so, how to add a directory for it
+  maybe save the tasks in a text file

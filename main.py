@@ -13,7 +13,7 @@ from datetime import datetime
 
 from layout_colour import Color
 
-from timer import Timer, BUTTON_TYPES, STORE_LIMIT, TIMER_FILE
+from timer import Timer, BUTTON_TYPES, STORE_LIMIT
 import timer_data as td
 
 
@@ -196,7 +196,7 @@ class MainWindow(QMainWindow):
 		end = dtime(e_hours % 24, e_mins)
 
 		print(date.strftime("%d/%m/%Y"), " : ", end.strftime("%H:%M"), duration)
-		td.time_store_in_file(TIMER_FILE, title, date.strftime("%d/%m/%Y"), duration * 60, start.strftime("%H:%M"), end.strftime("%H:%M"), note)
+		td.time_store_in_file(td.TIMER_FILE, title, date.strftime("%d/%m/%Y"), duration * 60, start.strftime("%H:%M"), end.strftime("%H:%M"), note)
 		self.toggle_manual_time_widg()
 		self.update_stat_times()
 
@@ -322,7 +322,7 @@ class TimerWidget(QWidget):
 			if self.timer.end_timer() >= STORE_LIMIT:
 				self.timer.title = self.task_box.currentText()
 				self.timer.note = self.text_box.text()
-				self.timer.store_time(TIMER_FILE, td.get_system_date())
+				self.timer.store_time(td.TIMER_FILE, td.get_system_date())
 				self.label.setText("00:00")
 				self.play_btn.setText("Start")
 

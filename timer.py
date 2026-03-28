@@ -7,7 +7,6 @@ from timer_data import time_store_in_file, get_system_time
 
 STORE_LIMIT = 1
 BUTTON_TYPES = {"PLAY": "Start", "SAVE": "Save", "RESET": "Reset"}
-TIMER_FILE = "times.csv"
 
 class Timer():
 	def __init__(self, title, note):

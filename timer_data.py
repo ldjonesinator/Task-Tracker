@@ -1,5 +1,8 @@
+import os
+import sys
 import math
 from datetime import datetime, timedelta
+
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,7 +14,6 @@ from PyQt5.QtCore import pyqtSignal
 
 DATA_TYPE = {"DATE": 0, "TOTAL": 1, "TOTAL_M": 1, "TOTAL_W": 1, "TIMES": 2, "NOTE": 3}
 DAYS = {"Mon": 1, "Tue": 2, "Wed": 3, "Thu": 4, "Fri": 5, "Sat": 6, "Sun": 7}
-TIMER_FILE = "times.csv"
 DELIM = ','
 
 
@@ -78,9 +80,11 @@ def time_store_in_file(filename, title, date, tt, start, end, note):
 # gets lists of data from the times file
 def get_time_data(filename, delim, task, xi):
 	xs = []
-
-	with open(filename, 'r') as file:
-		lines = file.readlines()
+	try:
+		with open(filename, 'r') as file:
+			lines = file.readlines()
+	except FileNotFoundError:
+		return -1
 
 	success = False
 	for line in lines:
@@ -195,7 +199,16 @@ def statistic_pie_chart(task, t_type, title):
 	plt.title(title)
 	plt.show()
 
+def get_base_path():
+	if getattr(sys, 'frozen', False):
+		return os.path.dirname(sys.executable)
+	return os.path.dirname(os.path.abspath(__file__))
 
+def data_file(name):
+	return os.path.join(BASE_PATH, name)
+
+BASE_PATH = get_base_path()
+TIMER_FILE = data_file("times.csv")
 
 if __name__ == "__main__":
 	print("Total: ", find_statistic("Uni", "TOTAL"))
