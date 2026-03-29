@@ -20,8 +20,10 @@ import timer_data as td
 MIN_SIZE = 0.55
 SPACING = 10
 LAYOUT_COLOUR = QColor(48, 48, 48)
+MAIN_TEXT_COLOUR = QColor(210, 210, 210)
 
 TIMER_FONT_SIZE = 120
+STAT_FONT_SIZE = 15
 BUTTON_WIDTH = 100
 BUTTON_HEIGHT = 50
 
@@ -40,8 +42,8 @@ class MainWindow(QMainWindow):
 
 		palette = QPalette()
 		palette.setColor(QPalette.ColorRole.Window, QColor(50, 50, 50))
-		palette.setColor(QPalette.ColorRole.WindowText, QColor(210, 210, 210))
-		palette.setColor(QPalette.ColorRole.Text, QColor(210, 210, 210))
+		palette.setColor(QPalette.ColorRole.WindowText, MAIN_TEXT_COLOUR)
+		palette.setColor(QPalette.ColorRole.Text, MAIN_TEXT_COLOUR)
 		palette.setColor(QPalette.ColorRole.Base, QColor(90, 90, 90))
 		palette.setColor(QPalette.ColorRole.PlaceholderText, QColor(50, 50, 50))
 		palette.setColor(QPalette.ColorRole.Button, QColor(50, 50, 50))
@@ -144,20 +146,23 @@ class MainWindow(QMainWindow):
 
 	def make_stat_widgets(self):
 		self.stat_widgets = {
+			"timeframe": QComboBox(),
 			"total": [QLabel(), ""]
 		}
+
+		self.stat_timeframes = {"This Week": "TOTAL_W", "This Month": "TOTAL_M", "This Year": "TOTAL", "Today": "TOTAL_D"}
+
+		self.stat_widgets["timeframe"].addItems(self.stat_timeframes.keys())
+		self.stat_widgets["timeframe"].currentIndexChanged.connect(self.update_stat_times)
+		self.stats_layout.addWidget(self.stat_widgets["timeframe"])
 
 		for task in self.tasks:
 			self.stat_widgets[task] = [QLabel(), ""]
 			self.stats_layout.addWidget(self.stat_widgets[task][0])
 
-		self.stats_layout.addLayout(h_layout(self.stat_widgets["total"][0]))
+		self.stats_layout.addWidget(self.stat_widgets["total"][0])
 
 		self.update_stat_times()
-
-
-
-
 
 
 	def toggle_manual_time_widg(self):
@@ -203,25 +208,22 @@ class MainWindow(QMainWindow):
 
 	def update_stat_times(self):
 		total = 0
-		total_time_m = 0
-		total_time_d = 0
+		text = self.stat_widgets["timeframe"].currentText()
+		timeframe = self.stat_timeframes[text]
 		for task in self.tasks:
-			time = td.find_statistic(task, "TOTAL") * 60
-			time_w = td.find_statistic(task, "TOTAL_W") * 60
-			self.stat_widgets[task][1] = f"{task} Total Time: {td.format_time(time, True)} | This Week: {math.ceil(time_w/60/60)} hrs"
+			time = td.find_statistic(task, timeframe) * 60
+			self.stat_widgets[task][1] = f"{task}: {td.format_time(time, True)}"
 
 			total += time
-			total_time_m += td.find_statistic(task, "TOTAL_M") * 60
-			total_time_d += td.find_statistic(task, "TOTAL_D") * 60
 
-		tty = f"Time Spent This Year: {math.ceil(total/60/60)} hrs"
-		ttm = " | " + f"This Month: {math.ceil(total_time_m/60/60)} hrs"
-		ttw = " | " + f"Today: {math.ceil(total_time_d/60/60)} hrs"
+		tt = f"Time Spent {text}: {math.ceil(total/60/60)} hrs"
 
-		self.stat_widgets["total"][1] = tty + ttm + ttw
+		self.stat_widgets["total"][1] = tt
 
-		for key in self.stat_widgets.keys():
+		for key in list(self.stat_widgets.keys())[1:]:
 			self.stat_widgets[key][0].setText(self.stat_widgets[key][1])
+			self.stat_widgets[key][0].setFont(QFont("Arial", STAT_FONT_SIZE))
+			# self.stat_widgets[key][0].setStyleSheet("QLabel { background-color: %s; color: %s}" % ((LAYOUT_COLOUR.darker(105)).name(), MAIN_TEXT_COLOUR.name()))
 
 
 

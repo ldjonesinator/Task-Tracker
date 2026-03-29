@@ -2,10 +2,5 @@
 
 - add graph button
 
-- add a refresh button with a refresh ICON for the statistics
-
-- add button to rotate through statistics (start with 'this week', 'month', 'total')
-- make text larger
-
 - make a button for adding a task
   maybe save the tasks in a text file
