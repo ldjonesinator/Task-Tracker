@@ -203,18 +203,20 @@ class MainWindow(QMainWindow):
 
 	def update_stat_times(self):
 		total = 0
-		time_m = 0
-		time_w = 0
+		total_time_m = 0
+		total_time_d = 0
 		for task in self.tasks:
 			time = td.find_statistic(task, "TOTAL") * 60
-			time_m += td.find_statistic(task, "TOTAL_M") * 60
-			time_w += td.find_statistic(task, "TOTAL_W") * 60
-			self.stat_widgets[task][1] = f"{task} Total Time: {td.format_time(time, True)}"
+			time_w = td.find_statistic(task, "TOTAL_W") * 60
+			self.stat_widgets[task][1] = f"{task} Total Time: {td.format_time(time, True)} | This Week: {math.ceil(time_w/60/60)} hrs"
+
 			total += time
+			total_time_m += td.find_statistic(task, "TOTAL_M") * 60
+			total_time_d += td.find_statistic(task, "TOTAL_D") * 60
 
 		tty = f"Time Spent This Year: {math.ceil(total/60/60)} hrs"
-		ttm = " | " + f"This Month: {math.ceil(time_m/60/60)} hrs"
-		ttw = " | " + f"This Week: {math.ceil(time_w/60/60)} hrs"
+		ttm = " | " + f"This Month: {math.ceil(total_time_m/60/60)} hrs"
+		ttw = " | " + f"Today: {math.ceil(total_time_d/60/60)} hrs"
 
 		self.stat_widgets["total"][1] = tty + ttm + ttw
 

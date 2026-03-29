@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtCore import pyqtSignal
 
 
-DATA_TYPE = {"DATE": 0, "TOTAL": 1, "TOTAL_M": 1, "TOTAL_W": 1, "TIMES": 2, "NOTE": 3}
+DATA_TYPE = {"DATE": 0, "TOTAL": 1, "TOTAL_M": 1, "TOTAL_W": 1, "TOTAL_D": 1, "TIMES": 2, "NOTE": 3}
 DAYS = {"Mon": 1, "Tue": 2, "Wed": 3, "Thu": 4, "Fri": 5, "Sat": 6, "Sun": 7}
 DELIM = ','
 
@@ -149,6 +149,10 @@ def find_statistic(task, t_type):
 			dates = get_time_data(TIMER_FILE, DELIM, task, DATA_TYPE["DATE"])
 			data = get_week_times(data, dates)
 
+		elif t_type == "TOTAL_D":
+			dates = get_time_data(TIMER_FILE, DELIM, task, DATA_TYPE["DATE"])
+			data = get_filter_times(data, dates, datetime.now(), "%d")
+
 		total_spent = 0
 		for time in data:
 			total_spent += int(time)
@@ -199,6 +203,7 @@ def statistic_pie_chart(task, t_type, title):
 	plt.title(title)
 	plt.show()
 
+
 def get_base_path():
 	if getattr(sys, 'frozen', False):
 		return os.path.dirname(sys.executable)
@@ -209,6 +214,7 @@ def data_file(name):
 
 BASE_PATH = get_base_path()
 TIMER_FILE = data_file("times.csv")
+
 
 if __name__ == "__main__":
 	print("Total: ", find_statistic("Uni", "TOTAL"))
