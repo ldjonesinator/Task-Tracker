@@ -1,6 +1,4 @@
 - allow to add a timetable for a certain frequency (e.g. every fortnight or week) and a certain start/end timetable
 
-- add graph button
-
 - make a button for adding a task
   maybe save the tasks in a text file

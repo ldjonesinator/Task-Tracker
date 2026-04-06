@@ -5,16 +5,38 @@ from datetime import datetime, timedelta
 
 
 import matplotlib.pyplot as plt
-import numpy as np
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-from PyQt5.QtWidgets import QPushButton
-from PyQt5.QtCore import pyqtSignal
 
 
 DATA_TYPE = {"DATE": 0, "TOTAL": 1, "TOTAL_M": 1, "TOTAL_W": 1, "TOTAL_D": 1, "TIMES": 2, "NOTE": 3}
 DAYS = {"Mon": 1, "Tue": 2, "Wed": 3, "Thu": 4, "Fri": 5, "Sat": 6, "Sun": 7}
 DELIM = ','
+
+class MplCanvas(FigureCanvas):
+	def __init__(self, parent=None, width=5, height=4, dpi=100):
+		fig = Figure(figsize=(width, height), dpi=dpi)
+		self.axes = fig.add_subplot(111)
+		fig.patch.set_facecolor('none')
+		super(MplCanvas, self).__init__(fig)
+
+
+	def statistic_pie_chart(self, task, t_type, title=""):
+		stat_dict = find_statistic(task, t_type)
+		total = 0
+		for key in stat_dict.keys():
+			total += stat_dict[key]
+		total = math.ceil(total / 60) # hrs
+
+		colours = ["#003f5c", "#2f4b7c", "#665191", "#a05195", "#d45087", "#f95d6a", "#ff7c43", "#ffa600"]
+		self.axes.clear()
+
+		self.axes.pie(stat_dict.values(), colors=colours, center=(0,5), autopct=lambda p: "{:.0f}".format(p * total / 100))
+		self.axes.legend(stat_dict.keys(), loc="best", fontsize=8, bbox_to_anchor=(0.95, 1.0))
+		self.axes.set_title(title)
+
+		self.axes.set_position([0.0, 0.1, 0.6, 0.8])
+		self.draw()
 
 
 def get_system_time():
@@ -188,6 +210,9 @@ def graph_time(filename, task):
 		x_axis.append(i)
 		y_axis.append(int(j))
 
+
+	# USE stackplot INSTEAD TO GET COLOURS FOR EACH ACTIVITY
+
 	plt.bar(x_axis, y_axis)
 	plt.title(task)
 	plt.xlabel("Date")
@@ -195,12 +220,6 @@ def graph_time(filename, task):
 	plt.yticks(y_axis.sort())
 	plt.ylabel("Duration")
 
-	plt.show()
-
-def statistic_pie_chart(task, t_type, title):
-	stat_dict = find_statistic(task, t_type)
-	plt.pie(stat_dict.values(), labels = stat_dict.keys(), autopct='%1.0f%%')
-	plt.title(title)
 	plt.show()
 
 
@@ -220,5 +239,4 @@ if __name__ == "__main__":
 	print("Total: ", find_statistic("Uni", "TOTAL"))
 	print("Month: ", find_statistic("Uni", "TOTAL_M"))
 	print("Week: ", find_statistic("Uni", "TOTAL_W"))
-	statistic_pie_chart("Uni", "NOTE", "Time Spent Per Uni Activity")
 	graph_time("times.csv", "Uni")

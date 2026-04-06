@@ -15,6 +15,7 @@ from layout_colour import Color
 
 from timer import Timer, BUTTON_TYPES, STORE_LIMIT
 import timer_data as td
+from timer_data import MplCanvas
 
 
 MIN_SIZE = 0.55
@@ -30,6 +31,7 @@ BUTTON_HEIGHT = 50
 DESCRIPTION_LENGTH = 100
 
 NOTIFICATION_CHECK_TIME = 15 # minutes
+
 
 class MainWindow(QMainWindow):
 
@@ -101,13 +103,6 @@ class MainWindow(QMainWindow):
 
 
 		self.base_layout.addLayout( self.left_layout )
-
-
-	def setup_right_layout(self):
-		self.right_layout.addWidget(Color(LAYOUT_COLOUR))
-		self.right_layout.addWidget(Color(LAYOUT_COLOUR))
-
-		self.base_layout.addLayout( self.right_layout )
 
 
 	def make_manual_time_widgets(self):
@@ -224,6 +219,34 @@ class MainWindow(QMainWindow):
 			self.stat_widgets[key][0].setText(self.stat_widgets[key][1])
 			self.stat_widgets[key][0].setFont(QFont("Arial", STAT_FONT_SIZE))
 			# self.stat_widgets[key][0].setStyleSheet("QLabel { background-color: %s; color: %s}" % ((LAYOUT_COLOUR.darker(105)).name(), MAIN_TEXT_COLOUR.name()))
+
+
+
+	def setup_right_layout(self):
+		self.canvas = MplCanvas(self, width=4, height=4, dpi=100)
+		self.canvas.setStyleSheet("background: transparent;")
+		self.canvas.hide()
+
+		self.taskpick = QComboBox()
+		self.taskpick.setMinimumWidth(200)
+		self.taskpick.addItems(self.tasks)
+		self.taskpick.currentIndexChanged.connect(lambda: self.canvas.statistic_pie_chart(self.taskpick.currentText(), "NOTE"))
+		self.show_graph = create_button("Show Graph", self.toggle_graph)
+
+		self.right_layout.addLayout(
+			h_layout(self.show_graph, self.taskpick)
+		)
+
+		self.right_layout.addWidget(self.canvas)
+
+		self.right_layout.addWidget(Color(LAYOUT_COLOUR))
+
+		self.base_layout.addLayout( self.right_layout )
+
+
+	def toggle_graph(self):
+		self.canvas.setVisible(not self.canvas.isVisible())
+		self.canvas.statistic_pie_chart(self.taskpick.currentText(), "NOTE")
 
 
 
