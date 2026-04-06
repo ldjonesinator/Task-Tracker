@@ -229,6 +229,7 @@ class MainWindow(QMainWindow):
 
 		self.taskpick = QComboBox()
 		self.taskpick.setMinimumWidth(200)
+		self.taskpick.setMinimumHeight(BUTTON_HEIGHT)
 		self.taskpick.addItems(self.tasks)
 		self.taskpick.currentIndexChanged.connect(lambda: self.canvas.statistic_pie_chart(self.taskpick.currentText(), "NOTE"))
 		self.show_graph = create_button("Show Graph", self.toggle_graph)
