@@ -1,4 +1,25 @@
+BUGS:
+- fix timer bug when paused
+
+- fix statistic TODAY bugs (i think its finding every date in each month? idk)
+
+- change the pie chart stuff as too much info causes it to not display
+- maybe make it so it makes the smaller things display as other
+then have make it so you can display the pie chart of the other times
+
+IDEAS:
+
 - allow to add a timetable for a certain frequency (e.g. every fortnight or week) and a certain start/end timetable
 
 - make a button for adding a task
   maybe save the tasks in a text file
+
+- change play button colours
+- fix the bug where play button switches to white after a save
+
+- clear the text in the text boxes after a save ---> DON'T DO THIS
+
+
+
+- add a button to start a new spreadsheet for time tracking
+- make a new csv per year, could solve this ^

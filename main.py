@@ -249,6 +249,11 @@ class MainWindow(QMainWindow):
 		self.canvas.setVisible(not self.canvas.isVisible())
 		self.canvas.statistic_pie_chart(self.taskpick.currentText(), "NOTE")
 
+		if self.canvas.isVisible():
+			self.show_graph.setText("Hide Graph")
+		else:
+			self.show_graph.setText("Show Graph")
+
 
 
 

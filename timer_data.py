@@ -135,6 +135,7 @@ def get_time_data(filename, delim, task, xi):
 
 def get_filter_times(times, dates, date, format="%Y"):
 	new_times = []
+	ref_dates = []
 
 	ref_format = date.strftime(format)
 
@@ -143,15 +144,16 @@ def get_filter_times(times, dates, date, format="%Y"):
 		# print(d.strftime(format), ref_format)
 		if d.strftime(format) == ref_format:
 			new_times.append(times[i])
+			ref_dates.append(dates[i])
 
-	return new_times
+	return [new_times, ref_dates]
 
 def get_week_times(times, dates):
 	ref_day = datetime.now().strftime("%a")
 	all_times = []
 	for i in range(DAYS[ref_day]):
 		sub_t = datetime.now() - timedelta(days=DAYS[ref_day]-i - 1)
-		temp_times = get_filter_times(times, dates, sub_t, "%d")
+		temp_times = get_filter_times(times, dates, sub_t, "%d")[0]
 		for time in temp_times:
 			all_times.append(time)
 
@@ -165,15 +167,18 @@ def find_statistic(task, t_type):
 	if DATA_TYPE[t_type] == DATA_TYPE["TOTAL"]:
 		if t_type == "TOTAL_M":
 			dates = get_time_data(TIMER_FILE, DELIM, task, DATA_TYPE["DATE"])
-			data = get_filter_times(data, dates, datetime.now(), "%m")
+			data = get_filter_times(data, dates, datetime.now(), "%m")[0]
 
 		elif t_type == "TOTAL_W":
 			dates = get_time_data(TIMER_FILE, DELIM, task, DATA_TYPE["DATE"])
-			data = get_week_times(data, dates)
+			data = get_filter_times(data, dates, datetime.now(), "%m")
+			data = get_week_times(data[0], data[1])
 
 		elif t_type == "TOTAL_D":
 			dates = get_time_data(TIMER_FILE, DELIM, task, DATA_TYPE["DATE"])
-			data = get_filter_times(data, dates, datetime.now(), "%d")
+			data = get_filter_times(data, dates, datetime.now(), "%m")
+			data = get_filter_times(data[0], data[1], datetime.now(), "%d")[0]
+
 
 		total_spent = 0
 		for time in data:
